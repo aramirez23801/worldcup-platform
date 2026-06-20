@@ -1,0 +1,15 @@
+# dependencies
+node_modules
+
+# build output
+dist
+dist-ssr
+
+# local env (public SPA config, but kept out of git per the brief)
+.env.local
+.env.*.local
+
+# vite / editor cruft
+.vite
+*.log
+.DS_Store

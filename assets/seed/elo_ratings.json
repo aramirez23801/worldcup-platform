@@ -1,0 +1,248 @@
+{
+  "source": "results.csv (martj42/international_results)",
+  "method": "World Football Elo (eloratings.net)",
+  "as_of_match_date": "2026-06-13",
+  "team_count": 48,
+  "teams": [
+    {
+      "teamId": "Algeria",
+      "eloRating": 1884,
+      "matches": 617
+    },
+    {
+      "teamId": "Argentina",
+      "eloRating": 2190,
+      "matches": 1069
+    },
+    {
+      "teamId": "Australia",
+      "eloRating": 1956,
+      "matches": 582
+    },
+    {
+      "teamId": "Austria",
+      "eloRating": 1889,
+      "matches": 860
+    },
+    {
+      "teamId": "Belgium",
+      "eloRating": 1957,
+      "matches": 853
+    },
+    {
+      "teamId": "Bosnia and Herzegovina",
+      "eloRating": 1673,
+      "matches": 284
+    },
+    {
+      "teamId": "Brazil",
+      "eloRating": 2063,
+      "matches": 1060
+    },
+    {
+      "teamId": "Canada",
+      "eloRating": 1876,
+      "matches": 470
+    },
+    {
+      "teamId": "Cape Verde",
+      "eloRating": 1654,
+      "matches": 235
+    },
+    {
+      "teamId": "Colombia",
+      "eloRating": 2063,
+      "matches": 638
+    },
+    {
+      "teamId": "Croatia",
+      "eloRating": 1971,
+      "matches": 396
+    },
+    {
+      "teamId": "Curaçao",
+      "eloRating": 1606,
+      "matches": 385
+    },
+    {
+      "teamId": "Czech Republic",
+      "eloRating": 1779,
+      "matches": 361
+    },
+    {
+      "teamId": "DR Congo",
+      "eloRating": 1764,
+      "matches": 524
+    },
+    {
+      "teamId": "Ecuador",
+      "eloRating": 2029,
+      "matches": 591
+    },
+    {
+      "teamId": "Egypt",
+      "eloRating": 1810,
+      "matches": 756
+    },
+    {
+      "teamId": "England",
+      "eloRating": 2090,
+      "matches": 1090
+    },
+    {
+      "teamId": "France",
+      "eloRating": 2125,
+      "matches": 935
+    },
+    {
+      "teamId": "Germany",
+      "eloRating": 2001,
+      "matches": 1031
+    },
+    {
+      "teamId": "Ghana",
+      "eloRating": 1625,
+      "matches": 671
+    },
+    {
+      "teamId": "Haiti",
+      "eloRating": 1689,
+      "matches": 511
+    },
+    {
+      "teamId": "Iran",
+      "eloRating": 1897,
+      "matches": 612
+    },
+    {
+      "teamId": "Iraq",
+      "eloRating": 1740,
+      "matches": 655
+    },
+    {
+      "teamId": "Ivory Coast",
+      "eloRating": 1815,
+      "matches": 636
+    },
+    {
+      "teamId": "Japan",
+      "eloRating": 1992,
+      "matches": 790
+    },
+    {
+      "teamId": "Jordan",
+      "eloRating": 1775,
+      "matches": 485
+    },
+    {
+      "teamId": "Mexico",
+      "eloRating": 1989,
+      "matches": 1004
+    },
+    {
+      "teamId": "Morocco",
+      "eloRating": 1992,
+      "matches": 618
+    },
+    {
+      "teamId": "Netherlands",
+      "eloRating": 2011,
+      "matches": 879
+    },
+    {
+      "teamId": "New Zealand",
+      "eloRating": 1733,
+      "matches": 416
+    },
+    {
+      "teamId": "Norway",
+      "eloRating": 1972,
+      "matches": 872
+    },
+    {
+      "teamId": "Panama",
+      "eloRating": 1853,
+      "matches": 539
+    },
+    {
+      "teamId": "Paraguay",
+      "eloRating": 1867,
+      "matches": 784
+    },
+    {
+      "teamId": "Portugal",
+      "eloRating": 2047,
+      "matches": 695
+    },
+    {
+      "teamId": "Qatar",
+      "eloRating": 1590,
+      "matches": 636
+    },
+    {
+      "teamId": "Saudi Arabia",
+      "eloRating": 1693,
+      "matches": 741
+    },
+    {
+      "teamId": "Scotland",
+      "eloRating": 1863,
+      "matches": 852
+    },
+    {
+      "teamId": "Senegal",
+      "eloRating": 1914,
+      "matches": 638
+    },
+    {
+      "teamId": "South Africa",
+      "eloRating": 1656,
+      "matches": 481
+    },
+    {
+      "teamId": "South Korea",
+      "eloRating": 1904,
+      "matches": 1008
+    },
+    {
+      "teamId": "Spain",
+      "eloRating": 2222,
+      "matches": 783
+    },
+    {
+      "teamId": "Sweden",
+      "eloRating": 1771,
+      "matches": 1101
+    },
+    {
+      "teamId": "Switzerland",
+      "eloRating": 1932,
+      "matches": 885
+    },
+    {
+      "teamId": "Tunisia",
+      "eloRating": 1737,
+      "matches": 678
+    },
+    {
+      "teamId": "Turkey",
+      "eloRating": 1915,
+      "matches": 643
+    },
+    {
+      "teamId": "United States",
+      "eloRating": 1878,
+      "matches": 791
+    },
+    {
+      "teamId": "Uruguay",
+      "eloRating": 1975,
+      "matches": 970
+    },
+    {
+      "teamId": "Uzbekistan",
+      "eloRating": 1822,
+      "matches": 354
+    }
+  ]
+}

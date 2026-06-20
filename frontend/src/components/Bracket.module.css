@@ -1,0 +1,33 @@
+.bracket {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+}
+
+.round {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.roundTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-md);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.nodes {
+  display: grid;
+  /* min(100%, 300px) so a single column can shrink below 300px on narrow phones instead of overflowing. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: var(--s-4);
+}
+
+.empty {
+  color: var(--text-muted);
+}

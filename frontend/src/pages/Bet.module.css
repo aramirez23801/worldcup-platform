@@ -1,0 +1,288 @@
+.section {
+  margin-bottom: var(--s-8);
+}
+
+.sectionTitle {
+  font-size: var(--fs-lg);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--s-4);
+}
+
+/* Match picker -------------------------------------------------------- */
+.pickerScroll {
+  max-height: 440px;
+  overflow-y: auto;
+  padding: 2px;
+  margin: -2px;
+}
+
+.pickerGrid {
+  display: grid;
+  /* min(100%, 300px) so the grid can collapse below 300px on narrow phones instead of overflowing. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: var(--s-3);
+}
+
+.pickSkeleton {
+  height: 120px;
+  border-radius: var(--r-md);
+}
+
+/* Forecast + form panel ---------------------------------------------- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+}
+
+.panelHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.matchup {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.matchupName {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.v {
+  color: var(--text-muted);
+  font-weight: 500;
+  padding: 0 var(--s-1);
+}
+.kickoff {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.forecastSkeleton {
+  height: 220px;
+  border-radius: var(--r-md);
+}
+
+/* Markets ------------------------------------------------------------- */
+.market {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.marketTitle {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+.outcomes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--s-3);
+}
+
+.outcome {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-1);
+  padding: var(--s-3) var(--s-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.outcome:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+.outcome:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.outcomePicked,
+.outcomePicked:hover {
+  border-color: var(--accent);
+  background: var(--accent-weak);
+}
+
+.outcomeLabel {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+.outcomeOdds {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-lg);
+  color: var(--text);
+}
+.outcomeProb {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+/* Stake form --------------------------------------------------------- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--border);
+}
+
+.stakeField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  max-width: 280px;
+}
+.stakeLabel {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+.input {
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-md);
+}
+.input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.input[aria-invalid='true'] {
+  border-color: var(--negative);
+}
+.balanceHint {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.payoutRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  max-width: 280px;
+  padding: var(--s-2) 0;
+}
+.payoutLabel {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+.payoutValue {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.error {
+  color: var(--negative);
+  font-size: var(--fs-sm);
+}
+.success {
+  color: var(--positive);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.form .btn,
+.form button {
+  align-self: flex-start;
+}
+
+/* Open bets ---------------------------------------------------------- */
+.betsSkeleton {
+  height: 160px;
+  border-radius: var(--r-md);
+}
+
+.betList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.betRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.betMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.betMatchup {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-base);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.betSelection {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.betNums {
+  display: flex;
+  gap: var(--s-5);
+}
+.betNum {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+.betNum b {
+  color: var(--text);
+  margin-left: var(--s-1);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.badgePending {
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.badgeWon {
+  color: var(--positive);
+  background: color-mix(in srgb, var(--positive) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--positive) 45%, var(--border));
+}
+.badgeLost {
+  color: var(--negative);
+  background: color-mix(in srgb, var(--negative) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--negative) 45%, var(--border));
+}

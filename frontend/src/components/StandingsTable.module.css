@@ -1,0 +1,92 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.head {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-md);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table thead th {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0 0 var(--s-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.teamHead {
+  text-align: left !important;
+}
+
+.table tbody td {
+  padding: var(--s-2) 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pos {
+  width: 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+}
+.name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.n {
+  width: 2.1rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.ptsHead,
+.pts {
+  color: var(--text);
+}
+.pts {
+  font-weight: 700;
+}
+
+/* Qualification accent — top two of each group. */
+.qualify td:first-child {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.qualify .pos {
+  color: var(--accent);
+}

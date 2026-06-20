@@ -1,5 +1,5 @@
 *.swp
-__pycache__
+**/__pycache__/
 .pytest_cache
 .venv
 *.egg-info
@@ -7,3 +7,7 @@ __pycache__
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+# Local helper scripts and working docs (not part of the deployable app)
+scripts/
+docs/

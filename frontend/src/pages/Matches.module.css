@@ -1,0 +1,31 @@
+.section {
+  margin-bottom: var(--s-8);
+}
+
+.sectionTitle {
+  font-size: var(--fs-lg);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--s-4);
+}
+
+.groupGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--s-4);
+}
+
+.tableSkeleton {
+  height: 240px;
+  border-radius: var(--r-md);
+}
+.nodeSkeleton {
+  height: 132px;
+  border-radius: var(--r-md);
+}
+
+@media (max-width: 520px) {
+  .groupGrid {
+    grid-template-columns: 1fr;
+  }
+}

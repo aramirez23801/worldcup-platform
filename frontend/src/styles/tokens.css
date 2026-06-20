@@ -1,0 +1,65 @@
+/*
+ * Design tokens — World Cup Platform SPA
+ * Thesis: deep "floodlit stadium-night" chrome so the 48 national flags carry the color.
+ * One accent (championship gold). Flags + the score bug spend the boldness; everything else is quiet.
+ */
+:root {
+  /* ---- Chrome: blue-ink ramp (NOT neutral gray-black) ---- */
+  --bg: #0a0f1c;          /* stadium-night ink */
+  --surface: #121a2e;     /* raised panel */
+  --surface-2: #1c2740;   /* inset / nested panel */
+  --border: #2c3654;      /* lit panel edge */
+  --text: #eef2fb;        /* cool white */
+  --text-muted: #8e9cb6;  /* secondary text */
+
+  /* ---- Accent: championship gold (single accent) ---- */
+  --accent: #e8ae3c;          /* trophy gold — primary actions, active nav, leaderboard */
+  --accent-sheen: #ffd27a;    /* metallic highlight — reserved for the score bug */
+  --accent-ink: #2a1e05;      /* text/icon sitting on a gold fill */
+  --accent-weak: rgba(232, 174, 60, 0.14); /* gold tint for active/hover backgrounds */
+
+  /* ---- Semantic (meaning only, never decoration) ---- */
+  --positive: #34cb7c;    /* wins / gains */
+  --negative: #f2585e;    /* losses */
+  --live: #ff6a2c;        /* LIVE state (the pulse) */
+
+  /* ---- Typography ---- */
+  --font-display: 'Saira Semi Condensed', system-ui, -apple-system, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* Type scale — sized up for broadcast confidence (bigger base, bigger headings). */
+  --fs-xs: 0.8125rem;
+  --fs-sm: 0.9375rem;
+  --fs-base: 1.0625rem;
+  --fs-md: 1.25rem;
+  --fs-lg: 1.625rem;
+  --fs-xl: 2.25rem;
+  --fs-2xl: 3.75rem;
+
+  /* ---- Radii ---- */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+
+  /* ---- Spacing scale ---- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-8: 48px;
+
+  /* ---- Elevation ---- */
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-menu: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  /* ---- Layout ---- */
+  --nav-h: 84px;
+  --maxw: 1160px;
+
+  /* ---- Motion (kept minimal; degrades under prefers-reduced-motion) ---- */
+  --t-fast: 120ms ease;
+}

@@ -1,0 +1,27 @@
+.notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s-3);
+  padding: var(--s-8) var(--s-5);
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-lg);
+}
+
+.error {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--negative) 45%, var(--border));
+}
+
+.title {
+  font-size: var(--fs-lg);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.message {
+  color: var(--text-muted);
+  max-width: 48ch;
+}

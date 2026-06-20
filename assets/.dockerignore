@@ -1,0 +1,6 @@
+seed/
+kb_corpus/
+_lambda/
+**/__pycache__/
+**/*.pyc
+jwt/

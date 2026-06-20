@@ -1,0 +1,45 @@
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+}
+
+.label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+.amount {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.skeleton {
+  display: inline-block;
+  width: 56px;
+  height: 0.9em;
+  border-radius: var(--r-sm);
+}
+
+/* Error state: balance fetch failed — tap to retry. */
+.retry {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--negative);
+  padding: 0 var(--s-1);
+}
+
+@media (max-width: 600px) {
+  .label {
+    display: none;
+  }
+}

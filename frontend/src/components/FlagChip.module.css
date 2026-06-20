@@ -1,0 +1,38 @@
+.chip {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-2);
+  /* Thin lit edge by default; ring variants override with a thicker colored ring. */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset, 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* Fill the circle with the square (1x1) flag, centered on both axes. Absolute inset removes the
+   inline-baseline drift from flag-icons' spacer so the visual center lands in the circle's center. */
+.flag {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  border-radius: inherit;
+}
+.flag::before {
+  content: none !important;
+}
+
+.neutral {
+  width: 100%;
+  height: 100%;
+  color: var(--text-muted);
+  background: var(--surface-2);
+}
+
+/* Winner ring (FINAL) — championship gold. */
+.win {
+  box-shadow: 0 0 0 2px var(--accent), 0 0 12px rgba(232, 174, 60, 0.5);
+}

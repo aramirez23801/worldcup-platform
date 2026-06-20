@@ -1,0 +1,62 @@
+.wrap {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--s-5);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s-3);
+  max-width: 40ch;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  box-shadow: 0 0 0 0 var(--accent-weak);
+  animation: breathe 1.6s ease-in-out infinite;
+}
+
+.title {
+  font-size: var(--fs-lg);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.message {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.action {
+  margin-top: var(--s-2);
+  padding: var(--s-2) var(--s-5);
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  transition: filter var(--t-fast);
+}
+
+.action:hover {
+  filter: brightness(1.08);
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

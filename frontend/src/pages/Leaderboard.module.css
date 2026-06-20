@@ -1,0 +1,184 @@
+/* Display-name control ------------------------------------------------ */
+.nameForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+  padding: var(--s-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.nameField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.nameLabel {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.nameInput {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-size: var(--fs-base);
+}
+.nameInput:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.nameMeta {
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+.nameCount {
+  color: var(--text-muted);
+}
+.nameSaved {
+  color: var(--positive);
+  font-weight: 600;
+}
+.nameError {
+  color: var(--negative);
+}
+
+.board {
+  margin-top: var(--s-5);
+}
+
+.skeleton {
+  height: 320px;
+  border-radius: var(--r-lg);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.table thead th {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-align: left;
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.rankCol {
+  width: 3.5rem;
+  text-align: center !important;
+}
+.wlCol {
+  width: 5rem;
+  text-align: center !important;
+}
+.profitCol {
+  width: 8rem;
+  text-align: right !important;
+}
+
+.table tbody td {
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  vertical-align: middle;
+}
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rank {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--fs-base);
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.playerName {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-base);
+  letter-spacing: 0.01em;
+}
+
+.youTag {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-ink);
+  background: var(--accent);
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+}
+
+.wl {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.profit {
+  text-align: right;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-md);
+}
+.pos {
+  color: var(--positive);
+}
+.neg {
+  color: var(--negative);
+}
+.zero {
+  color: var(--text-muted);
+}
+
+/* Highlight the caller's own row. */
+.youRow td {
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+
+/* Rank-1 — where the gold accent earns its keep. */
+.top td {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+.top .rank {
+  color: var(--accent);
+  font-weight: 700;
+}
+.top td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.trophy {
+  display: inline-block;
+  vertical-align: middle;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  color: var(--accent);
+}
