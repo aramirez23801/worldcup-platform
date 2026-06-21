@@ -15,7 +15,7 @@ owning a clear slice of the system.
 - `app.py`: CDK app entry point; creates the stacks and passes shared resources between them.
 - `cdk.json`: CDK CLI config and feature flags.
 - `requirements.txt`: CDK Python dependencies.
-- `stacks/data.py`: the seven DynamoDB tables, their indexes, and the deploy-time seeding of fixtures and Elo ratings.
+- `stacks/data.py`: the six DynamoDB tables, their indexes, and the deploy-time seeding of fixtures and Elo ratings.
 - `stacks/auth.py`: Cognito user pool, hosted sign-in UI, the SPA app client, and a trigger that gives each new user a starting wallet.
 - `stacks/knowledge.py`: the Bedrock knowledge base over the World Cup corpus (stored in S3 Vectors) and the Bedrock guardrail.
 - `stacks/agent.py`: the chatbot agent, packaged as a container and run on Bedrock AgentCore.
@@ -43,12 +43,12 @@ the starting balance, so a new player can bet immediately.
 
 ### Data and API
 
-Seven DynamoDB tables hold the state: Wallets, Matches, Bets, Teams, Notifications,
-Leaderboard, and WsConnections. All of them use on-demand billing and AWS-managed
-encryption. The tables that need a second access pattern carry a secondary index
-(for example, loading every bet on a match by status during settlement, or finding
-a user's live connections to push them an update). Wallets and Bets also have
-point-in-time recovery turned on, since they hold the money-relevant records.
+Six DynamoDB tables hold the state: Wallets, Matches, Bets, Teams, Leaderboard, and
+WsConnections. All of them use on-demand billing and AWS-managed encryption. The
+tables that need a second access pattern carry a secondary index (for example,
+loading every bet on a match by status during settlement, or finding a user's live
+connections to push them an update). Wallets and Bets also have point-in-time
+recovery turned on, since they hold the money-relevant records.
 
 The REST API is API Gateway with a Cognito authorizer on every route, so each
 request is checked against the user pool before it reaches a Lambda. The user's id
@@ -90,15 +90,19 @@ This is the asynchronous spine of the app. An EventBridge schedule runs a result
 poller every minute. The poller reads a live football data feed (its token is held
 in Secrets Manager), updates the Matches table, writes the running score and pushes
 it over the WebSocket while a match is live, and when a match finishes it puts a
-"match settled" event on a custom EventBridge bus.
+"match settled" event on a custom EventBridge bus. When a knockout match finishes,
+the poller also recomputes both teams' Elo ratings from the result and writes them
+back to the Teams table, so the forecaster reflects current form. It does this for
+knockout matches only: the baseline Elo was built from a match history that already
+included the opening group-stage results played before this project started, so
+recomputing those would count the same matches twice.
 
 That event is routed into an SQS queue, which drives the settlement workflow. The
 settlement function is a Lambda durable function, so it processes one match at a
 time and survives restarts without losing its place. It loads every pending bet on
 the match, settles each one with a conditional write so a bet can never be paid
-twice, credits the winners' wallets, recomputes both teams' Elo ratings from the
-result so the forecaster reflects current form, and then hands the settled bets to a
-notify function that pushes the outcomes and the new balances over the WebSocket. Any
+twice, credits the winners' wallets, and then hands the settled bets to a notify
+function that pushes the outcomes and the new balances over the WebSocket. Any
 message that fails settlement after its retries lands in a dead-letter queue, which
 has its own alarm.
 
@@ -223,11 +227,11 @@ pipeline. Team strength is an Elo rating: at deploy the full match history is re
 in date order to produce a baseline rating per team, weighting matches by importance
 (World Cup results count most, friendlies least) and by goal margin, so recent form
 naturally dominates. The ratings then keep updating during the tournament: when a
-match settles, the settlement step recomputes both teams' Elo from the result and
-writes it back, so each new forecast reflects current-tournament form. Because the
-committed history already covers the group stage, the live updates apply to the
-knockout results the baseline has not already absorbed, which avoids counting a match
-twice.
+knockout match finishes, the results poller recomputes both teams' Elo from the result
+and writes it back, so each new forecast reflects current-tournament form. The updates
+are limited to knockout results because the baseline already absorbed the opening
+group-stage matches (the history was built after the tournament had started), so
+recomputing those would count the same matches twice.
 
 ### Notifications are real-time, not email
 
@@ -239,9 +243,9 @@ live push is the single notification channel.
 
 ### Account-agnostic
 
-`app.py` reads the account and region from the environment with no hardcoded account
-id, and every table, queue, and resource name is either generated or stable, so
-`cdk deploy` works in any account.
+`app.py` hardcodes no account id; the CDK CLI resolves the target account and region
+from the caller's AWS credentials at deploy time, and every table, queue, and
+resource name is either generated or stable, so `cdk deploy` works in any account.
 
 ## Monitoring
 
