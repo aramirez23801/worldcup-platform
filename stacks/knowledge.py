@@ -61,10 +61,12 @@ class KnowledgeStack(Stack):
         )
 
         # ------------- S3 VECTORS STORE ------------- #
+        # ------------- S3 VECTORS STORE ------------- #
         vector_bucket = s3vectors.CfnVectorBucket(
             self, 'VectorBucket',
             vector_bucket_name='worldcup-vectors',
         )
+        vector_bucket.apply_removal_policy(RemovalPolicy.DESTROY)
         vector_index = s3vectors.CfnIndex(
             self, 'VectorIndex',
             index_name='worldcup-kb-index',
@@ -76,6 +78,7 @@ class KnowledgeStack(Stack):
                 non_filterable_metadata_keys=['AMAZON_BEDROCK_TEXT', 'AMAZON_BEDROCK_METADATA'],
             ),
         )
+        vector_index.apply_removal_policy(RemovalPolicy.DESTROY)
         vector_index.add_dependency(vector_bucket)
 
         # ------------- KB SERVICE ROLE ------------- #

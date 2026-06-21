@@ -189,18 +189,6 @@ class DataStack(Stack):
             properties={'teams': elo_seed['teams']},
         )
  
-        # ------------- NOTIFICATIONS ------------- #
-        self.notifications = ddb.Table(
-            self, 'NotificationsTable',
-            table_name='Notifications',
-            partition_key=ddb.Attribute(name='userId', type=ddb.AttributeType.STRING),
-            sort_key=ddb.Attribute(name='ts', type=ddb.AttributeType.STRING),
-            billing_mode=self._BILLING,
-            encryption=self._ENCRYPTION,
-            removal_policy=self._REMOVAL,
-            time_to_live_attribute='expiresAt',
-        )
- 
         # ------------- LEADERBOARD ------------- #
         # pk holds the scope: "LB#TOURNAMENT" or "LB#MATCH#<matchId>".
         self.leaderboard = ddb.Table(
@@ -235,6 +223,5 @@ class DataStack(Stack):
         CfnOutput(self, 'MatchesTableName', value=self.matches.table_name)
         CfnOutput(self, 'BetsTableName', value=self.bets.table_name)
         CfnOutput(self, 'TeamsTableName', value=self.teams.table_name)
-        CfnOutput(self, 'NotificationsTableName', value=self.notifications.table_name)
         CfnOutput(self, 'LeaderboardTableName', value=self.leaderboard.table_name)
         CfnOutput(self, 'WsConnectionsTableName', value=self.ws_connections.table_name)
