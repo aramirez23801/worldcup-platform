@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FlagChip } from './FlagChip';
 import { useCountdown } from '../hooks/useCountdown';
-import { finalWinner, formatKickoff, sideLabel, stageLabel } from '../lib/format';
+import { finalWinner, formatKickoff, penaltyNote, sideLabel, stageLabel } from '../lib/format';
 import type { Match } from '../lib/types';
 import styles from './ScoreBug.module.css';
 
@@ -19,6 +19,7 @@ export function ScoreBug({ match }: { match: Match }) {
   const isFinal = status === 'FINAL';
   const hasScore = isLive || isFinal;
   const winner = finalWinner(match);
+  const pens = penaltyNote(match);
 
   const countdown = useCountdown(!hasScore ? match.kickoff : undefined);
   const flip = useGoalFlip(match);
@@ -61,6 +62,7 @@ export function ScoreBug({ match }: { match: Match }) {
         <span className={styles.meta}>
           {hasScore ? formatKickoff(match.kickoff) : stageLabel(match.stage, match.group)}
           {match.venue ? ` · ${match.venue}` : ''}
+          {pens ? ` · ${pens}` : ''}
         </span>
       </div>
 

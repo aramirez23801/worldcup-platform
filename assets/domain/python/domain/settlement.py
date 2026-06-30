@@ -38,10 +38,14 @@ def outcome_1x2(match):
 
 
 def bet_won(bet, match):
-    """Whether a bet won, given the final score."""
+    """Whether a bet won, given the final result. 1X2 settles on the match outcome
+    (who advanced): the poller supplies it as match["outcome"], which for a knockout
+    decided on penalties is the shootout winner rather than the level score; older
+    events without it fall back to the score. OU settles on match goals (the stored
+    normal-time score), so a shootout never tips a goals market."""
     selection = bet["selection"]
     if bet["betType"] == "1X2":
-        return selection == outcome_1x2(match)
+        return selection == (match.get("outcome") or outcome_1x2(match))
     if bet["betType"] == "OU25":
         total = int(match["scoreHome"]) + int(match["scoreAway"])
         return (selection == "OVER" and total >= 3) or (selection == "UNDER" and total <= 2)

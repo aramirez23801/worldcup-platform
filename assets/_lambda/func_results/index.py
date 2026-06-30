@@ -41,6 +41,7 @@ from domain import results
 
 _REGION = os.environ.get("AWS_REGION", "us-east-1")
 _MATCHES_TABLE = os.environ["MATCHES_TABLE"]
+_TEAMS_TABLE = os.environ["TEAMS_TABLE"]
 _EVENT_BUS = os.environ["EVENT_BUS"]
 _FEED_SECRET = os.environ["FEED_SECRET"]
 _FEED_URL = os.environ["FEED_URL"]
@@ -48,12 +49,20 @@ _FEED_URL = os.environ["FEED_URL"]
 _EVENT_SOURCE = "worldcup.results"
 _EVENT_DETAIL_TYPE = "match.settled"
 
-# Reconciled against the feed for live updates and settlement (knockouts are resolved
-# separately, out of TBD, before this pass).
-_PENDING_STATUSES = ("SCHEDULED", "LIVE")
+# Reconciled against the feed each run: SCHEDULED/LIVE for live updates and settlement,
+# and FINAL so an already-settled match whose feed score later changes is re-synced on
+# the card (knockouts are resolved separately, out of TBD, before this pass).
+_RECONCILED_STATUSES = ("SCHEDULED", "LIVE", "FINAL")
+
+# A FINISHED match is settled only once the feed's terminal state has been unchanged
+# for this long, so a late correction (a VAR reversal, extra time, a shootout) is not
+# settled on prematurely. The score still mirrors live throughout; only the one-time
+# settlement waits. Measured against the feed's own per-match lastUpdated.
+_FINAL_CONFIRM_SECONDS = 120
 
 _ddb = boto3.resource("dynamodb", region_name=_REGION)
 _matches = _ddb.Table(_MATCHES_TABLE)
+_teams = _ddb.Table(_TEAMS_TABLE)
 _events = boto3.client("events", region_name=_REGION)
 _secrets = boto3.client("secretsmanager", region_name=_REGION)
 
@@ -93,8 +102,45 @@ def _fixtures_by_status(*statuses):
     return fixtures
 
 
+def _canonical_by_norm():
+    """normalize_name(teamId) -> teamId for every team, so a feed name can be resolved to
+    our canonical spelling. The team set is the small, static tournament field, so one scan
+    per run is cheap; normalize_name has no collisions across the canonical names, so each
+    normalized form maps to exactly one team."""
+    canonical = {}
+    start_key = None
+    while True:
+        params = {"ProjectionExpression": "teamId"}
+        if start_key:
+            params["ExclusiveStartKey"] = start_key
+        resp = _teams.scan(**params)
+        for item in resp.get("Items", []):
+            canonical[results.normalize_name(item["teamId"])] = item["teamId"]
+        start_key = resp.get("LastEvaluatedKey")
+        if not start_key:
+            break
+    return canonical
+
+
 def _as_int(value):
     return int(value) if value is not None else None
+
+
+def _feed_quiet(feed_match):
+    """True once the feed's state for this match has been unchanged for the confirm
+    window, the gate before we settle a FINISHED match. Uses the feed's own per-match
+    lastUpdated; if it is missing or unparseable, treat the match as quiet so a feed
+    without that field never stalls settlement."""
+    ts = feed_match.get("lastUpdated")
+    if not ts:
+        return True
+    try:
+        updated = datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=datetime.timezone.utc)
+    except (ValueError, TypeError):
+        return True
+    age = (datetime.datetime.now(datetime.timezone.utc) - updated).total_seconds()
+    return age >= _FINAL_CONFIRM_SECONDS
 
 
 def _resolve_fixture(match_id, team_home, team_away, external_id):
@@ -125,32 +171,58 @@ def _resolve_fixture(match_id, team_home, team_away, external_id):
         raise
 
 
-def _mark_final(match_id, score_home, score_away, external_id):
+def _mark_final(match_id, score_home, score_away, external_id, decided_by, penalty_winner):
     """Move a match to FINAL with the final score, from SCHEDULED (never caught live)
     or LIVE. Returns True if this call made the transition, False if the match was
-    already FINAL (another run won the race), which keeps settlement firing once."""
+    already FINAL (another run won the race), which keeps settlement firing once.
+    decided_by/penalty_winner are written only for a shootout (None on a normal
+    match, where the attributes stay absent)."""
+    set_expr = ("SET #s = :final, scoreHome = :h, scoreAway = :a, "
+                "externalId = :ext, lastUpdated = :now")
+    values = {
+        ":final": "FINAL", ":h": score_home, ":a": score_away,
+        ":ext": external_id, ":now": _now(),
+    }
+    if decided_by:
+        set_expr += ", decidedBy = :db"
+        values[":db"] = decided_by
+    if penalty_winner:
+        set_expr += ", penaltyWinner = :pw"
+        values[":pw"] = penalty_winner
     try:
         _matches.update_item(
             Key={"matchId": match_id},
-            UpdateExpression=(
-                "SET #s = :final, scoreHome = :h, scoreAway = :a, "
-                "externalId = :ext, lastUpdated = :now"
-            ),
+            UpdateExpression=set_expr,
             ConditionExpression="#s <> :final",
             ExpressionAttributeNames={"#s": "status"},
-            ExpressionAttributeValues={
-                ":final": "FINAL",
-                ":h": score_home,
-                ":a": score_away,
-                ":ext": external_id,
-                ":now": _now(),
-            },
+            ExpressionAttributeValues=values,
         )
         return True
     except ClientError as exc:
         if exc.response["Error"]["Code"] == "ConditionalCheckFailedException":
             return False
         raise
+
+
+def _update_final_score(match_id, score_home, score_away, decided_by, penalty_winner):
+    """Re-sync an ALREADY-FINAL match's displayed score to the feed (self-healing
+    when the feed corrects a finished match). Updates the score only; never emits
+    settlement, so the money side still fires exactly once."""
+    set_expr = "SET scoreHome = :h, scoreAway = :a, lastUpdated = :now"
+    values = {":h": score_home, ":a": score_away, ":now": _now(), ":final": "FINAL"}
+    if decided_by:
+        set_expr += ", decidedBy = :db"
+        values[":db"] = decided_by
+    if penalty_winner:
+        set_expr += ", penaltyWinner = :pw"
+        values[":pw"] = penalty_winner
+    _matches.update_item(
+        Key={"matchId": match_id},
+        UpdateExpression=set_expr,
+        ConditionExpression="#s = :final",
+        ExpressionAttributeNames={"#s": "status"},
+        ExpressionAttributeValues=values,
+    )
 
 
 def _mark_live(match_id, score_home, score_away):
@@ -187,7 +259,7 @@ def _live_changed(fixture, score_home, score_away):
     return stored != (score_home, score_away)
 
 
-def _emit_settled(match_id, score_home, score_away):
+def _emit_settled(match_id, score_home, score_away, outcome):
     _events.put_events(Entries=[{
         "Source": _EVENT_SOURCE,
         "DetailType": _EVENT_DETAIL_TYPE,
@@ -195,6 +267,7 @@ def _emit_settled(match_id, score_home, score_away):
             "matchId": match_id,
             "scoreHome": score_home,
             "scoreAway": score_away,
+            "outcome": outcome,
         }),
         "EventBusName": _EVENT_BUS,
     }])
@@ -209,29 +282,55 @@ def _broadcast(kind, match_id, score_home, score_away):
     })
 
 
-def _resolve(fixture, feed_match):
-    """RESOLVE path: write the feed's resolved teams onto a TBD fixture and open it.
-    Returns True if this run resolved it."""
-    home, away = results.resolved_pair(feed_match)
+def _resolve(fixture, feed_match, canonical):
+    """RESOLVE path: map the feed's resolved teams to our canonical Teams spelling and
+    write them onto a TBD fixture, opening it. Returns True if this run resolved it. If
+    either feed name matches no canonical team, log it and leave the fixture TBD (never
+    store an unmatched name); the next run retries, so a genuinely new feed spelling is
+    loud in the logs but harmless to the data and to other matches."""
+    home, away = results.resolved_pair(feed_match, canonical)
     match_id = fixture["matchId"]
+    if home is None or away is None:
+        raw_home = (feed_match.get("homeTeam") or {}).get("name")
+        raw_away = (feed_match.get("awayTeam") or {}).get("name")
+        print("results: knockout name unmatched, left TBD", match_id,
+              "home", repr(raw_home), "->", repr(home),
+              "away", repr(raw_away), "->", repr(away))
+        return False
     if not _resolve_fixture(match_id, home, away, str(feed_match.get("id"))):
         return False
     print("results: resolved", match_id, home, "vs", away)
     return True
 
 
-def _settle(fixture, feed_match):
+def _settle(fixture, feed_match, canonical):
     """FINAL path: record the result, drive settlement, flip every card to FINAL.
-    Returns True if this run settled the match."""
-    score = results.oriented_score(fixture, feed_match)
-    if score is None:
+    Returns True if this run settled the match.
+
+    Settlement is held until the feed's terminal state has been quiet for the confirm
+    window, so a late correction is not settled on prematurely. A match already FINAL is
+    never re-settled (the money side fires once); instead its displayed score is re-synced
+    if the feed has since corrected it, logging a loud marker so the divergence is
+    reconciled rather than silently frozen."""
+    result = results.final_result(fixture, feed_match, canonical)
+    if result is None:
         return False
     match_id = fixture["matchId"]
-    score_home, score_away = score
-    if not _mark_final(match_id, score_home, score_away, str(feed_match.get("id"))):
+    score_home, score_away = result["scoreHome"], result["scoreAway"]
+
+    if fixture.get("status") == "FINAL":
+        _resync_final(fixture, result)
         return False
-    _emit_settled(match_id, score_home, score_away)
-    print("results: settled", match_id, str(score_home) + "-" + str(score_away))
+
+    if not _feed_quiet(feed_match):
+        return False
+
+    if not _mark_final(match_id, score_home, score_away, str(feed_match.get("id")),
+                       result["decidedBy"], result["penaltyWinner"]):
+        return False
+    _emit_settled(match_id, score_home, score_away, result["outcome"])
+    print("results: settled", match_id, str(score_home) + "-" + str(score_away),
+          "outcome", result["outcome"])
     try:
         _broadcast("match.final", match_id, score_home, score_away)
     except Exception as exc:
@@ -246,6 +345,27 @@ def _settle(fixture, feed_match):
         except Exception as exc:
             print("results: elo update failed", match_id, type(exc).__name__, str(exc))
     return True
+
+
+def _resync_final(fixture, result):
+    """A match we already settled is still in the feed. If the feed has since changed its
+    final score, update our displayed score (self-healing) and log a loud marker -- bets
+    were settled on the old score and need reconciling. Settlement is NOT re-run here."""
+    match_id = fixture["matchId"]
+    score_home, score_away = result["scoreHome"], result["scoreAway"]
+    stored = (_as_int(fixture.get("scoreHome")), _as_int(fixture.get("scoreAway")))
+    if stored == (score_home, score_away):
+        return
+    print("results: settled score changed", match_id,
+          "stored", str(stored[0]) + "-" + str(stored[1]),
+          "feed", str(score_home) + "-" + str(score_away),
+          "outcome", result["outcome"])
+    try:
+        _update_final_score(match_id, score_home, score_away,
+                            result["decidedBy"], result["penaltyWinner"])
+        _broadcast("match.final", match_id, score_home, score_away)
+    except Exception as exc:
+        print("results: final resync failed", match_id, type(exc).__name__, str(exc))
 
 
 def _live(fixture, feed_match):
@@ -268,19 +388,22 @@ def _live(fixture, feed_match):
     return True
 
 
-def _resolve_knockouts(feed_matches):
+def _resolve_knockouts(feed_matches, canonical):
     """Open knockout fixtures the feed has decided. The feed owns the bracket; we mirror its resolved teams onto our placeholder fixtures, matched by stage and kickoff."""
+    tbd_fixtures = _fixtures_by_status("TBD")
+    if not tbd_fixtures:
+        return 0
     index = results.index_knockouts_by_slot(feed_matches)
     decided = results.any_knockout_decided(feed_matches)
     resolved = 0
     pending = 0
-    for fixture in _fixtures_by_status("TBD"):
+    for fixture in tbd_fixtures:
         feed_match = results.find_knockout(index, fixture)
         if feed_match is None or not results.is_resolved(feed_match):
             pending += 1
             continue
         try:
-            if _resolve(fixture, feed_match):
+            if _resolve(fixture, feed_match, canonical):
                 resolved += 1
         except Exception as exc:
             print("results: resolve failed", fixture["matchId"], type(exc).__name__, str(exc))
@@ -300,10 +423,14 @@ def handler(event, context):
 
     feed_matches = feed.get("matches", [])
 
-    # Open any knockout fixtures the feed has now decided, before reconciling play.
-    resolved = _resolve_knockouts(feed_matches)
+    # Map feed team names to our canonical spelling once per run; both passes use it
+    # (resolving knockout teams, and naming a shootout winner).
+    canonical = _canonical_by_norm()
 
-    index = results.index_by_pair(_fixtures_by_status(*_PENDING_STATUSES))
+    # Open any knockout fixtures the feed has now decided, before reconciling play.
+    resolved = _resolve_knockouts(feed_matches, canonical)
+
+    index = results.index_by_pair(_fixtures_by_status(*_RECONCILED_STATUSES))
     settled = 0
     live = 0
     for feed_match in feed_matches:
@@ -317,7 +444,7 @@ def handler(event, context):
             continue
         try:
             if is_final:
-                if _settle(fixture, feed_match):
+                if _settle(fixture, feed_match, canonical):
                     settled += 1
             else:
                 if _live(fixture, feed_match):

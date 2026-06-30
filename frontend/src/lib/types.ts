@@ -17,6 +17,8 @@ export interface Match {
   status: MatchStatus;
   scoreHome?: number;
   scoreAway?: number;
+  decidedBy?: 'PENALTIES'; // a knockout settled by a shootout; the score stays level
+  penaltyWinner?: string; // team that advanced on penalties (matches teamHome or teamAway)
   externalId?: string;
 }
 

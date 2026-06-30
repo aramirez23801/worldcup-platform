@@ -293,9 +293,10 @@ class SettlementStack(Stack):
             actions=["events:PutEvents"],
             resources=[self.bus.event_bus_arn],
         ))
-        # Knockout results update both teams' Elo, which the forecaster reads.
+        # Knockout results update both teams' Elo, which the forecaster reads; the resolver
+        # also scans the team set to map feed names to our canonical spelling.
         self.results_fn.add_to_role_policy(iam.PolicyStatement(
-            actions=["dynamodb:GetItem", "dynamodb:UpdateItem"],
+            actions=["dynamodb:GetItem", "dynamodb:UpdateItem", "dynamodb:Scan"],
             resources=[teams_table.table_arn],
         ))
         # Broadcast running scores and final results to every live connection
@@ -452,6 +453,33 @@ class SettlementStack(Stack):
             threshold=1,
             evaluation_periods=3,
             datapoints_to_alarm=3,
+            comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+            treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
+        )
+
+        # --- settled-score divergence alarm ---------------------------------
+        # The poller self-heals the displayed score when the feed corrects an
+        # already-FINAL match, logging "results: settled score changed". But the
+        # bets were paid on the old score, so that marker means a settlement needs
+        # reconciling. Turn it into a metric and alarm on a single occurrence.
+        settled_changed_metric = results_logs.add_metric_filter(
+            "SettledScoreChangedFilter",
+            filter_pattern=logs.FilterPattern.literal('"results: settled score changed"'),
+            metric_namespace="WorldCup/Results",
+            metric_name="SettledScoreChanged",
+            metric_value="1",
+            default_value=0,
+        )
+
+        cloudwatch.Alarm(
+            self, "SettledScoreChangedAlarm",
+            alarm_name="worldcup-results-settled-score-changed",
+            metric=settled_changed_metric.metric(
+                period=Duration.minutes(1),
+                statistic="Sum",
+            ),
+            threshold=1,
+            evaluation_periods=1,
             comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
             treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
         )

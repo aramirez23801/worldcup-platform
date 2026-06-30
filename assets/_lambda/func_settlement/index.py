@@ -67,7 +67,9 @@ def handler(event, context: DurableContext):
     match_id = detail["matchId"]
     score_home = detail["scoreHome"]
     score_away = detail["scoreAway"]
-    match = {"scoreHome": score_home, "scoreAway": score_away}
+    # outcome is the 1X2 result the poller resolved (penalty-aware); absent on
+    # older events, where settle_bet falls back to deriving it from the score.
+    match = {"scoreHome": score_home, "scoreAway": score_away, "outcome": detail.get("outcome")}
 
     bets = context.step(load_pending(match_id), name="load-pending")
 

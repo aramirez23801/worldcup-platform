@@ -161,6 +161,100 @@ def find_knockout(index, fixture):
     return index.get(_slot_key(feed_stage, kickoff))
 
 
-def resolved_pair(feed_match):
-    """The (home, away) team names the feed has resolved for a knockout match."""
-    return feed_match["homeTeam"]["name"], feed_match["awayTeam"]["name"]
+def canonical_name(feed_name, canonical_by_norm):
+    """Map a feed team name to our canonical Teams-table spelling, or None if no team
+    matches. canonical_by_norm maps normalize_name(teamId) -> teamId and is built by the
+    caller from the Teams table; routing the feed name through the same normalize_name used
+    for fixture matching means the _ALIASES pairs (Czechia, Congo DR, ...) and plain
+    accent/punctuation differences (Curaçao, the hyphen in Bosnia-Herzegovina) are folded
+    by one path, with no second map to keep in sync."""
+    if not feed_name:
+        return None
+    return canonical_by_norm.get(normalize_name(feed_name))
+
+
+def resolved_pair(feed_match, canonical_by_norm):
+    """The (home, away) team names for a resolved knockout match, mapped from the feed's
+    names to our canonical Teams-table spelling. Either element is None when the feed name
+    matches no canonical team; the caller must not store a None (an unmatched name)."""
+    home = canonical_name((feed_match.get("homeTeam") or {}).get("name"), canonical_by_norm)
+    away = canonical_name((feed_match.get("awayTeam") or {}).get("name"), canonical_by_norm)
+    return home, away
+
+
+# --- final result, penalty-aware ---------------------------------------------
+# A knockout can be level after normal (and extra) time and decided on penalties.
+# The feed records that as duration PENALTY_SHOOTOUT, a level regularTime/extraTime,
+# and a fullTime that folds in the shootout (e.g. regulation 1-1, fullTime 5-6).
+# Settlement must pay the 1X2 market to the team that ADVANCED (the shootout winner)
+# while the goals market and the displayed score count only match goals. So we split
+# the finished match into a display/goals score (normal time) and an outcome (who
+# went through), and carry both through match.settled.
+
+_PENALTY_SHOOTOUT = "PENALTY_SHOOTOUT"
+
+
+def _score_pair(feed_match, key):
+    """A (home, away) int pair from one of the feed's score sub-objects (fullTime,
+    regularTime, ...), or (None, None) when the feed has not populated it."""
+    sub = (feed_match.get("score") or {}).get(key) or {}
+    home, away = sub.get("home"), sub.get("away")
+    if home is None or away is None:
+        return None, None
+    return int(home), int(away)
+
+
+def _our_home_is_feed_home(fixture, feed_match):
+    return normalize_name(fixture["teamHome"]) == normalize_name(feed_match["homeTeam"]["name"])
+
+
+def final_result(fixture, feed_match, canonical_by_norm):
+    """The settled view of a finished feed match, oriented to our fixture:
+        {scoreHome, scoreAway, outcome, decidedBy, penaltyWinner}
+    or None if the feed has not populated the full-time score yet.
+
+    scoreHome/scoreAway is the score in normal (and extra) time, excluding any
+    shootout, so a penalty-decided knockout stores its level score (e.g. 1-1) and
+    the Over/Under market counts only match goals. outcome is who advanced --
+    HOME/DRAW/AWAY in our fixture's orientation -- which for a shootout is the
+    penalty winner, not the level score. Settlement uses outcome for 1X2 and the
+    stored score for OU. decidedBy/penaltyWinner annotate a shootout for the UI."""
+    ft_home, ft_away = _score_pair(feed_match, "fullTime")
+    if ft_home is None:
+        return None
+    duration = (feed_match.get("score") or {}).get("duration")
+
+    if duration == _PENALTY_SHOOTOUT:
+        reg_home, reg_away = _score_pair(feed_match, "regularTime")
+        if reg_home is None:  # feed gave only fullTime; fall back to it for display
+            reg_home, reg_away = ft_home, ft_away
+        et_home, et_away = _score_pair(feed_match, "extraTime")
+        disp_home = reg_home + (et_home or 0)
+        disp_away = reg_away + (et_away or 0)
+        # The shootout winner is the higher full-time score (full time includes the
+        # shootout); a shootout is never drawn.
+        feed_outcome = "HOME" if ft_home > ft_away else "AWAY"
+    else:
+        disp_home, disp_away = ft_home, ft_away
+        feed_outcome = ("HOME" if ft_home > ft_away
+                        else "AWAY" if ft_away > ft_home else "DRAW")
+
+    score_home, score_away = (disp_home, disp_away) if _our_home_is_feed_home(fixture, feed_match) \
+        else (disp_away, disp_home)
+    if feed_outcome == "DRAW":
+        outcome = "DRAW"
+    else:
+        feed_home_won = feed_outcome == "HOME"
+        outcome = "HOME" if feed_home_won == _our_home_is_feed_home(fixture, feed_match) else "AWAY"
+
+    decided_by = "PENALTIES" if duration == _PENALTY_SHOOTOUT else None
+    penalty_winner = None
+    if decided_by == "PENALTIES":
+        winner_side = "homeTeam" if feed_outcome == "HOME" else "awayTeam"
+        penalty_winner = canonical_name(
+            (feed_match.get(winner_side) or {}).get("name"), canonical_by_norm)
+
+    return {
+        "scoreHome": score_home, "scoreAway": score_away,
+        "outcome": outcome, "decidedBy": decided_by, "penaltyWinner": penalty_winner,
+    }

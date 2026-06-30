@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { FlagChip } from './FlagChip';
-import { finalWinner, formatKickoffShort, sideLabel, stageLabel } from '../lib/format';
+import { finalWinner, formatKickoffShort, penaltyNote, sideLabel, stageLabel } from '../lib/format';
 import type { Match } from '../lib/types';
 import styles from './MatchLockup.module.css';
 
@@ -26,13 +26,14 @@ export function MatchLockup({
   const isFinal = match.status === 'FINAL';
   const hasScore = isLive || isFinal;
   const winner = finalWinner(match);
+  const finalLabel = isFinal && penaltyNote(match) ? 'Full time · pens' : 'Full time';
 
   const inner = (
     <>
       <div className={styles.top}>
         <span className={styles.tag}>{stageLabel(match.stage, match.group)}</span>
         <span className={isLive ? `${styles.state} ${styles.stateLive}` : styles.state}>
-          {isLive ? 'Live' : isFinal ? 'Full time' : formatKickoffShort(match.kickoff)}
+          {isLive ? 'Live' : isFinal ? finalLabel : formatKickoffShort(match.kickoff)}
         </span>
       </div>
 

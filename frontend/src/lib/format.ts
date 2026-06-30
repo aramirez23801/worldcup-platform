@@ -66,15 +66,26 @@ export function stageLabel(stage: Stage, group?: string): string {
 }
 
 /**
- * Winner of a FINAL match, derived PURELY from the final score: 'home' | 'away' | 'draw',
- * or null when not final / no score. Drawn group matches and penalty-decided knockouts (which the
- * feed records as a level score) both return 'draw' — no winner ring — by design.
+ * Winner of a FINAL match: 'home' | 'away' | 'draw', or null when not final / no score.
+ * Normally derived purely from the score; a knockout decided on penalties carries a level
+ * score but still has a winner (penaltyWinner), so that side wins here. A drawn group match
+ * has no winner and returns 'draw'.
  */
 export function finalWinner(m: Match): 'home' | 'away' | 'draw' | null {
   if (m.status !== 'FINAL' || m.scoreHome == null || m.scoreAway == null) return null;
   if (m.scoreHome > m.scoreAway) return 'home';
   if (m.scoreAway > m.scoreHome) return 'away';
+  if (m.decidedBy === 'PENALTIES' && m.penaltyWinner) {
+    if (m.penaltyWinner === m.teamHome) return 'home';
+    if (m.penaltyWinner === m.teamAway) return 'away';
+  }
   return 'draw';
+}
+
+/** Caption for a knockout decided on penalties, e.g. "Paraguay won on penalties", else null. */
+export function penaltyNote(m: Match): string | null {
+  if (m.status !== 'FINAL' || m.decidedBy !== 'PENALTIES') return null;
+  return m.penaltyWinner ? `${m.penaltyWinner} won on penalties` : 'Decided on penalties';
 }
 
 /** The label to show for a side: the resolved team, else the bracket source placeholder, else "TBD". */
