@@ -208,6 +208,26 @@ def _our_home_is_feed_home(fixture, feed_match):
     return normalize_name(fixture["teamHome"]) == normalize_name(feed_match["homeTeam"]["name"])
 
 
+_FEED_WINNER = {"HOME_TEAM": "HOME", "AWAY_TEAM": "AWAY", "DRAW": "DRAW"}
+
+
+def _feed_winner(feed_match, ft_home, ft_away):
+    """Who won, in the feed's own orientation (HOME/AWAY/DRAW). Prefer the feed's explicit
+    score.winner field; for a shootout fall back to the penalty tally; else compare full
+    time. Full time is the last resort because on a shootout it folds in the penalties and
+    the feed can publish a (wrong) full time before the winner is actually settled -- the
+    failure that mis-paid two penalty matches."""
+    score = feed_match.get("score") or {}
+    explicit = _FEED_WINNER.get(score.get("winner"))
+    if explicit:
+        return explicit
+    if score.get("duration") == _PENALTY_SHOOTOUT:
+        pen_home, pen_away = _score_pair(feed_match, "penalties")
+        if pen_home is not None and pen_home != pen_away:
+            return "HOME" if pen_home > pen_away else "AWAY"
+    return "HOME" if ft_home > ft_away else "AWAY" if ft_away > ft_home else "DRAW"
+
+
 def final_result(fixture, feed_match, canonical_by_norm):
     """The settled view of a finished feed match, oriented to our fixture:
         {scoreHome, scoreAway, outcome, decidedBy, penaltyWinner}
@@ -231,25 +251,22 @@ def final_result(fixture, feed_match, canonical_by_norm):
         et_home, et_away = _score_pair(feed_match, "extraTime")
         disp_home = reg_home + (et_home or 0)
         disp_away = reg_away + (et_away or 0)
-        # The shootout winner is the higher full-time score (full time includes the
-        # shootout); a shootout is never drawn.
-        feed_outcome = "HOME" if ft_home > ft_away else "AWAY"
     else:
         disp_home, disp_away = ft_home, ft_away
-        feed_outcome = ("HOME" if ft_home > ft_away
-                        else "AWAY" if ft_away > ft_home else "DRAW")
 
-    score_home, score_away = (disp_home, disp_away) if _our_home_is_feed_home(fixture, feed_match) \
-        else (disp_away, disp_home)
+    # Who advanced, from the feed's authoritative winner (not the score, which is level
+    # on a shootout), in our fixture's orientation.
+    feed_outcome = _feed_winner(feed_match, ft_home, ft_away)
+    home_is_feed_home = _our_home_is_feed_home(fixture, feed_match)
+    score_home, score_away = (disp_home, disp_away) if home_is_feed_home else (disp_away, disp_home)
     if feed_outcome == "DRAW":
         outcome = "DRAW"
     else:
-        feed_home_won = feed_outcome == "HOME"
-        outcome = "HOME" if feed_home_won == _our_home_is_feed_home(fixture, feed_match) else "AWAY"
+        outcome = "HOME" if (feed_outcome == "HOME") == home_is_feed_home else "AWAY"
 
     decided_by = "PENALTIES" if duration == _PENALTY_SHOOTOUT else None
     penalty_winner = None
-    if decided_by == "PENALTIES":
+    if decided_by == "PENALTIES" and feed_outcome in ("HOME", "AWAY"):
         winner_side = "homeTeam" if feed_outcome == "HOME" else "awayTeam"
         penalty_winner = canonical_name(
             (feed_match.get(winner_side) or {}).get("name"), canonical_by_norm)

@@ -205,20 +205,27 @@ def _mark_final(match_id, score_home, score_away, external_id, decided_by, penal
 
 
 def _update_final_score(match_id, score_home, score_away, decided_by, penalty_winner):
-    """Re-sync an ALREADY-FINAL match's displayed score to the feed (self-healing
-    when the feed corrects a finished match). Updates the score only; never emits
-    settlement, so the money side still fires exactly once."""
+    """Re-sync an ALREADY-FINAL match's displayed result to the feed (self-healing when
+    the feed corrects a finished match, including a penalty winner flip that leaves the
+    level score unchanged). Updates the displayed score and the penalty annotations only;
+    never emits settlement, so the money side still fires exactly once."""
     set_expr = "SET scoreHome = :h, scoreAway = :a, lastUpdated = :now"
     values = {":h": score_home, ":a": score_away, ":now": _now(), ":final": "FINAL"}
+    remove = []
     if decided_by:
         set_expr += ", decidedBy = :db"
         values[":db"] = decided_by
+    else:
+        remove.append("decidedBy")
     if penalty_winner:
         set_expr += ", penaltyWinner = :pw"
         values[":pw"] = penalty_winner
+    else:
+        remove.append("penaltyWinner")
+    update_expr = set_expr + (" REMOVE " + ", ".join(remove) if remove else "")
     _matches.update_item(
         Key={"matchId": match_id},
-        UpdateExpression=set_expr,
+        UpdateExpression=update_expr,
         ConditionExpression="#s = :final",
         ExpressionAttributeNames={"#s": "status"},
         ExpressionAttributeValues=values,
@@ -348,17 +355,22 @@ def _settle(fixture, feed_match, canonical):
 
 
 def _resync_final(fixture, result):
-    """A match we already settled is still in the feed. If the feed has since changed its
-    final score, update our displayed score (self-healing) and log a loud marker -- bets
-    were settled on the old score and need reconciling. Settlement is NOT re-run here."""
+    """A match we already settled is still in the feed. If the feed has since changed the
+    result -- the displayed score OR the winner (a shootout flip leaves the level score
+    unchanged) -- update our stored result (self-healing display) and log a loud marker:
+    bets were settled on the old result and need reconciling. Settlement is NOT re-run
+    here."""
     match_id = fixture["matchId"]
     score_home, score_away = result["scoreHome"], result["scoreAway"]
-    stored = (_as_int(fixture.get("scoreHome")), _as_int(fixture.get("scoreAway")))
-    if stored == (score_home, score_away):
+    stored_score = (_as_int(fixture.get("scoreHome")), _as_int(fixture.get("scoreAway")))
+    stored_winner = fixture.get("penaltyWinner")
+    if stored_score == (score_home, score_away) and stored_winner == result["penaltyWinner"]:
         return
     print("results: settled score changed", match_id,
-          "stored", str(stored[0]) + "-" + str(stored[1]),
+          "stored", str(stored_score[0]) + "-" + str(stored_score[1]),
+          "winner", str(stored_winner),
           "feed", str(score_home) + "-" + str(score_away),
+          "feedWinner", str(result["penaltyWinner"]),
           "outcome", result["outcome"])
     try:
         _update_final_score(match_id, score_home, score_away,
